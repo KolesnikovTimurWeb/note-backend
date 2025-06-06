@@ -10,12 +10,12 @@ router.post("/", async (req, res) => {
     const { title, caption, image } = req.body;
     const { storage } = req.query;
 
-    if (!title || !caption || !image || !storage) {
+    if (!title || !caption || !storage) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     // Find storage by title
-    const storageDoc = await Storage.findOne({ title: storage });
+    const storageDoc = await Storage.findById(storage);
     if (!storageDoc) {
       return res.status(404).json({ message: "Storage not found" });
     }
@@ -23,7 +23,9 @@ router.post("/", async (req, res) => {
     // Create and save new note
     const note = new Note({ title, caption, image });
     await note.save();
-
+    if (!Array.isArray(storageDoc.notes)) {
+      storageDoc.notes = [];
+    }
     // Push note into storage and save
     storageDoc.notes.push(note._id);
     await storageDoc.save();
@@ -38,8 +40,11 @@ router.post("/", async (req, res) => {
 // Get all storages (with optional population of notes)
 router.get("/", async (req, res) => {
   try {
-    const storage = await Storage.find().populate("notes"); // optional
-    res.status(200).json({ storage });
+    const { storage } = req.query;
+    if (storage) {
+      const storages = await Storage.findById(storage).populate("notes");
+      return res.status(200).json({ storages });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

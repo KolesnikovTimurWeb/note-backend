@@ -1,11 +1,12 @@
 import express from "express";
 import Storage from "../models/Storage.js";
 import Note from "../models/Note.js";
+import protectionRoute from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // Create and add note to storage
-router.post("/", async (req, res) => {
+router.post("/", protectionRoute, async (req, res) => {
   try {
     const { title, caption, image } = req.body;
     const { storage } = req.query;
@@ -38,13 +39,23 @@ router.post("/", async (req, res) => {
 });
 
 // Get all storages (with optional population of notes)
-router.get("/", async (req, res) => {
+router.get("/", protectionRoute, async (req, res) => {
   try {
     const { storage } = req.query;
     if (storage) {
       const storages = await Storage.findById(storage).populate("notes");
       return res.status(200).json({ storages });
     }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+router.get("/:id", protectionRoute, async (req, res) => {
+  try {
+    const { id } = req.query;
+    const note = await Storage.findOne(id); // optional
+    res.status(200).json({ note });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

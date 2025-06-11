@@ -55,7 +55,7 @@ router.get("/:id", protectionRoute, async (req, res) => {
   try {
     const { id } = req.query;
     const note = await Storage.findOne(id); // optional
-    res.status(200).json({ note });
+    return res.status(200).json({ note });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
